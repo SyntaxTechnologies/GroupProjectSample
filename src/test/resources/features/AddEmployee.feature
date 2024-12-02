@@ -5,7 +5,7 @@ Feature: Add Employee
     Given user is logged in with admin credentials
     And user navigates to AddEmployeePage
 
-  @smoke @sprint5
+  @smoke @sprint5 @DB
   Scenario: Add Employee
     When admin user enters "John" "J" and "Doe"
     And admin user click on save button
