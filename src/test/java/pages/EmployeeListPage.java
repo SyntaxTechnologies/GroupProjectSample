@@ -24,6 +24,13 @@ public class EmployeeListPage extends CommonMethods {
     @FindBy(xpath = "(//table[@id='resultTable']/tbody/tr/td[2])[1]/a")
     public WebElement idInTable;
 
+    @FindBy(xpath = "//table[@id='resultTable']/tbody/tr/td[1]")
+    public  WebElement checkboxEmployeeDetails;
+
+    @FindBy(id="btnDelete")
+    public WebElement deleteButton;
+    @FindBy(id="dialogDeleteBtn")
+    public WebElement employeeDeleteModal;
     public EmployeeListPage() {
 
         PageFactory.initElements(driver, this);

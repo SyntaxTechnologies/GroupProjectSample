@@ -8,6 +8,7 @@ import org.openqa.selenium.WebElement;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import utils.*;
 
 import java.util.Iterator;
@@ -18,7 +19,7 @@ public class AddEmployeeSteps extends CommonMethods {
     String random;
     public  String empID;
     public  String empName;
-    String firstName, lastName;
+    String firstName, lastName,middleName;
     //
     @Given("user navigates to AddEmployeePage")
     public void user_navigates_to_AddEmployeePage() {
@@ -29,17 +30,27 @@ public class AddEmployeeSteps extends CommonMethods {
     @When("admin user enters {string} {string} and {string}")
     public void admin_user_enters_and(String firstName, String middleName, String lastName) {
         random = randomAlphabets();
-        this.firstName=firstName;
-        this.lastName=lastName;
-        firstName=firstName+random;
-        middleName=middleName+random;
-        lastName=lastName+random;
-        empName = firstName+" "+middleName+" "+lastName;
+        firstName += random;
+        middleName += random;
+        lastName += random;
+
+// Set employee name fields
+        this.firstName = firstName;
+        this.middleName = middleName;
+        this.lastName = lastName;
+
+
+        empName = String.join(" ", firstName, middleName, lastName);
+
+// Send text inputs
         sendText(addEmployee.firstName, firstName);
         sendText(addEmployee.middleName, middleName);
         sendText(addEmployee.lastName, lastName);
         sendText(addEmployee.photograph, Constants.BUG_BUSTERS_PICTURE_FILEPATH);
+
+
         empID = addEmployee.empID.getAttribute("value");
+
     }
 
     @When("admin user click on save button")
@@ -51,6 +62,16 @@ public class AddEmployeeSteps extends CommonMethods {
     @Then("employee {string} added successfully")
     public void employee_added_successfully(String username) {
         Assert.assertEquals("Assertion Failed!", username+random, pDetails.firstName.getAttribute("value"));
+        //database verification
+         String query="select emp_firstname,emp_middle_name,emp_lastname from hs_hr_employees where employee_id="+empID;
+
+        List<Map<String,String>> dataFromDb= DatabaseUtils.fetch(query);
+        String actualFN=dataFromDb.get(0).get("emp_firstname");
+        String actualMN=dataFromDb.get(0).get("emp_middle_name");
+        String actualLN=dataFromDb.get(0).get("emp_lastname");
+        Assert.assertEquals(firstName,actualFN);
+        Assert.assertEquals(middleName,actualMN);
+        Assert.assertEquals(lastName,actualLN);
     }
 
 
@@ -115,5 +136,20 @@ public class AddEmployeeSteps extends CommonMethods {
             }
             Assert.assertEquals("Required",actualValueWebElement.getText());
         }
+    }
+
+    @Then("the user deletes the employee")
+    public void the_user_deletes_the_employee() throws InterruptedException {
+        getWait().until(ExpectedConditions.visibilityOf(pDetails.actual_employeeID));
+        String actualEmpID = pDetails.actual_employeeID.getAttribute("value");
+        click(dash.employeeListOption);
+        System.out.println(actualEmpID);
+        waitForClickability(employeeListPage.idEmployee);
+        Thread.sleep(5000);
+        sendText(employeeListPage.idEmployee,actualEmpID);
+        click(employeeListPage.searchButton);
+        click(employeeListPage.checkboxEmployeeDetails);
+        click(employeeListPage.deleteButton);
+        click(employeeListPage.employeeDeleteModal);
     }
 }

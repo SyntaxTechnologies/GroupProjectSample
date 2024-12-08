@@ -8,101 +8,39 @@ import java.util.Map;
 
 public class DatabaseUtils {
 
-    private static Connection conn;
-    private static Statement statement;
-    private static ResultSet rset;
-    private static ResultSetMetaData rSetMetaData;
+    public static List<Map<String,String>> fetch(String query){
 
-    /**
-     * This method create connection to the database, execute query and return object ResulSet
-     *
-     * @param sqlQuery
-     * @return ResultSet
-     */
-    public static ResultSet getResultSet(String sqlQuery) {
+        String dbURL=ConfigReader.getPropertyValue("dbURL");
+        String userName=ConfigReader.getPropertyValue("dbUserName");
+        String password=ConfigReader.getPropertyValue("dbPassword");
+        List<Map<String, String>> TblData = new ArrayList<>();
+        // Establish the connection between java program and the database
+        try( Connection connection = DriverManager.getConnection(dbURL, userName, password);
+             // takes your queries to the database and bring the results back to Java program
+             Statement statement = connection.createStatement();) {
 
-        try {
-            conn = DriverManager.getConnection(
-                    ConfigReader.getPropertyValue("dbUrl"),
-                    ConfigReader.getPropertyValue("dbUsername"),
-                    ConfigReader.getPropertyValue("dbPassword"));
-            statement = conn.createStatement();
-
-            rset = statement.executeQuery(sqlQuery);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return rset;
-    }
-
-    /**
-     * This method return an Object of ResultSetMetaData
-     *
-     * @param query
-     * @return ResultSetMetaData
-     */
-    public static ResultSetMetaData getRsetMetada(String query) {
-        rset = getResultSet(query);
-        rSetMetaData = null;
-        try {
-            rSetMetaData = rset.getMetaData();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return rSetMetaData;
-    }
-
-    /**
-     * This method extract data from ResultSet and stores into List of Maps
-     *
-     * @param sqlQuery
-     * @return ResultSet
-     */
-    public static List<Map<String, String>> getListOfMapsFromRset(String sqlQuery) {
-
-        rSetMetaData = getRsetMetada(sqlQuery);
-        List<Map<String, String>> listFromRset = new ArrayList<>();
-        Map<String, String> mapData;
-
-        try {
-            //iterates over the rows
-            while (rset.next()) {
-                mapData = new LinkedHashMap<>();
-                //iterates over the columns
-                for (int i = 1; i <= rSetMetaData.getColumnCount(); i++) {
-                    String key = rSetMetaData.getColumnName(i);
-                    String value = rset.getString(key);
-                    //we store data from every column into a map
-                    mapData.put(key, value);
+            ResultSet rows = statement.executeQuery(query);
+            // Extracting all the info like column names from the statement
+            ResultSetMetaData headerInfo = rows.getMetaData();
+            // step 1 extract a row
+            while (rows.next()) {
+                // create a map to store the info from that row into map
+                Map<String, String> rowMap = new LinkedHashMap<>();
+                for (int i = 1; i <= headerInfo.getColumnCount(); i++) {
+                    // extract all the column info and store it inside the map
+                    String key = headerInfo.getColumnName(i);
+                    String value = rows.getString(i);
+                    rowMap.put(key, value);
                 }
-                //we store map with Data into a List
-                listFromRset.add(mapData);
+
+                TblData.add(rowMap);
             }
-        } catch (SQLException e) {
+
+        }catch (SQLException e){
             e.printStackTrace();
-        } finally {
-            closeConnection();
         }
-        return listFromRset;
+
+        return TblData;
     }
 
-    /**
-     * This method close all database resources
-     */
-    public static void closeConnection() {
-        try {
-            if (rset != null) {
-                rset.close();
-            }
-            if (statement != null) {
-                statement.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }

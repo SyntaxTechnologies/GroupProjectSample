@@ -31,6 +31,6 @@ public class Hooks {
 			pic = CommonMethods.takeScreenshot("passed/" + scenario.getName());
 		}
 		scenario.attach(pic, "image/png", scenario.getName());
-		CommonMethods.closeBrowser();
+//		CommonMethods.closeBrowser();
 	}
 }
